@@ -1,5 +1,5 @@
 ﻿using MyVidly.Models;
-using MyVidly.ViewModel;
+using MyVidly.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Data.Entity;
@@ -18,11 +18,19 @@ namespace MyVidly.Controllers
             _context = new ApplicationDbContext();
         }
         // GET: Customer
+        [Authorize(Roles = RoleName.CanManageMovies)]
         public ActionResult Index()
         {
-            var movieList = _context.Customers.Include(c => c.Membership);
-            return View(movieList);
+            if (User.IsInRole(RoleName.CanManageMovies))
+                return View("Index");
+
+            return View("customerForm");
         }
+        //public ActionResult Index()
+        //{
+        //    var movieList = _context.Customers.Include(c => c.Membership);
+        //    return View(movieList);
+        //}
 
         public ActionResult New()
         {
@@ -34,6 +42,7 @@ namespace MyVidly.Controllers
             return View("CustomerForm", newCustomerViewModel);
         }
 
+        [Authorize(Roles = RoleName.CanManageMovies)]
         public ActionResult Edit(int id)
         {
             if (id == 0)
@@ -48,17 +57,22 @@ namespace MyVidly.Controllers
 
             return View("CustomerForm", viewModel);
         }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = RoleName.CanManageMovies)]
         public ActionResult AddAndUpdate(Customer customer)
         {
-            //if (!ModelState.IsValid)
-            //{
-            //    var viewModel = new CustomerMembershipViewModel()
-            //    {
-            //        Customer = customer,
-            //        MembershipTypes = _context.MembershipTypes
-            //    };
-            //    return View("CustomerForm", viewModel);
-            //}
+            if (!ModelState.IsValid)
+            {
+                var viewModel = new CustomerMembershipViewModel()
+                {
+                    Customer = customer,
+                    MembershipTypes = _context.MembershipTypes
+                };
+                return View("CustomerForm", viewModel);
+            }
 
             if (customer.Id == 0)
             {

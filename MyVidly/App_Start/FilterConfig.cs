@@ -8,6 +8,12 @@ namespace MyVidly
         public static void RegisterGlobalFilters(GlobalFilterCollection filters)
         {
             filters.Add(new HandleErrorAttribute());
+
+            // add the authorization globally
+            filters.Add(new AuthorizeAttribute());
+
+            // my application endpoint will no longer be available on http channel
+            filters.Add(new RequireHttpsAttribute());
         }
     }
 }

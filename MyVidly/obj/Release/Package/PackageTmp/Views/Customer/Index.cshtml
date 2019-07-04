@@ -1,0 +1,141 @@
+﻿@*@model IEnumerable<MyVidly.Models.Customer>*@
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Customers</h2>
+
+<div>
+    @Html.ActionLink("New Customer", "New", "Customer", null, new { @class = "btn btn-primary" })
+</div>
+
+<table id="customers" class="table table-bordered table-hover">
+    <thead>
+        <tr>
+            <th><b>Customer</b></th>
+            <th><b>Membership Type</b></th>
+            <th><b>Delete</b></th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+<!--By using following Client-side method, we don't need the following server-side render any more-->
+
+
+    @*@if (!Model.Any())
+        {
+            <p>No found</p>
+        }
+        else
+        {
+
+                <tbody>
+                    @foreach (var customer in Model)
+                    {
+                        <tr>
+                            <td>@Html.ActionLink(customer.Name, "Edit", "Customer", new { id = customer.Id }, null)</td>
+                            <td>@customer.Membership.Name</td>
+                            <td>
+                                <button data-customer-id="@customer.Id" class="btn-link js-delete">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }*@
+
+@section scripts
+{
+
+        <script>
+            $(document).ready(function () {
+                //In this implementation, we render the view in the server, and return HTML markup in the client
+                //datatable plug-in will extract our data from DOM elements and construct its own list of cutomers
+                //so it will maintain a bunch of Jason objects on the client and whenever we search for something or sort a
+                //column it would use these Jason objects to provide filtering sorting and pagination.
+
+                //But this comes with a cost when returning.
+                //All this ASTM on markup from the server and then data tables has to parse this markup to extract the actual data.
+                //This is not an issue if we have a small number of records but if you're working with a few hundreds
+                //or thousands of records it's better to get raw data from the server give it to data tables and let it
+                //generate the HTML markup on the client.
+
+                //$("#customers").DataTable();
+
+                var table = $("#customers").DataTable({
+                    //use ajax to call web api to get data
+                    ajax: {
+                        url: "/api/customers",
+                        dataSrc: ""
+                    },
+                    columns: [
+                        {
+                            data: "name",
+                            render: function(data, type, customer) {
+                                return "<a href='/customer/edit/" + customer.id + "'>" + customer.name + "</a>";
+                            }
+                        },
+                        {
+                            data: "membership.name"
+                        },
+                        {
+                            data: "id",
+                            render: function(data) {
+                                return "<button class='btn-link js-delete' data-customer-id=" + data + ">Delete</button>";
+                            }
+                        }
+                    ]
+                });
+
+                //$("#customers").DataTable({
+                //    ajax: {
+                //        url: "api/customers",
+                //        dataSrc: ""
+                //    },
+                //    columns: [
+                //        {
+                //            data: "name",
+                //            render: function (data, type, customer) {
+                //                return "<a href = '/customers/edit/'" + customer.id + "'>" + customer.name + "</a>";
+                //            }
+                //        },
+                //        {
+                //            data:"name"
+                //        },
+                //        {
+                //            data: "id",
+                //            render: function (data) {
+                //                return "<button class = 'btn-link js-delete' data-customer-id = " + data + ">Delete</button>";
+                //            }
+                //        }
+                //    ]
+                //});
+
+                //handling the click event
+                $("#customers").on("click", ".js-delete", function () {
+                    var button = $(this);
+                    bootbox.confirm("Are you sure you want to delete this customer?", function (result) {
+                        if (result) {
+                            $.ajax({
+                                url: "/api/customers/" + button.attr("data-customer-id"),
+                                method: "DELETE",
+                                success: function () {
+                                    //we are removing the t r element from our table.
+                                    //But as you have learned data table keeps the list of customers internally.
+                                    //button.parents("tr").remove();
+
+                                    //This will delete the corresponding customer from the internal list maintained by data table.
+                                    //the customer will disappear
+                                    table.row(button.parents("tr")).remove().draw();
+                                    //console.log("Success");
+                                }
+                            });
+                        }
+                    })
+                });
+            });
+        </script>
+
+    }

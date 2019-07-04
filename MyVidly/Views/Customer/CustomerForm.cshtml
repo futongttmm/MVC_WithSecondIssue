@@ -1,32 +1,71 @@
-﻿@model MyVidly.ViewModel.CustomerMembershipViewModel
+﻿@model MyVidly.ViewModels.CustomerMembershipViewModel
 @{
     ViewBag.Title = "CustomerForm";
-    Layout = "~/Views/Shared/_Layout.cshtml";
+    Layout = "~/Views/Shared/_CustomerLayout.cshtml";
+}
+
+@if (Model.Customer.Id == 0)
+{
+    <h2>New Customer</h2>
+}
+else
+{
+    <h2>Edit Customer</h2>
 }
 
 @using (Html.BeginForm("AddAndUpdate", "Customer"))
 {
+    <!--Defualt: Html.ValidationSummary()-->
+    @Html.ValidationSummary(true, "Please fix following errors.")
     <div class="form-group">
         @Html.LabelFor(c => c.Customer.Name)
         @Html.TextBoxFor(c => c.Customer.Name, new { @class = "form-control" })
+        @Html.ValidationMessageFor(c => c.Customer.Name)
     </div>
-    <div class="form-group">
-        @Html.LabelFor(c => c.Customer.Birthdate)
-        @Html.TextBoxFor(c => c.Customer.Birthdate, "{0:d MMM yyyy}", new { @class = "form-control" })
-    </div>
+
     <div class="form-group">
         @Html.LabelFor(c => c.Customer.MembershipTypeId)
         @Html.DropDownListFor(c => c.Customer.MembershipTypeId,
                         new SelectList(Model.MembershipTypes, "Id", "Name"),
                         "",
                         new { @class = "form-control" })
+        @Html.ValidationMessageFor(c => c.Customer.MembershipTypeId)
     </div>
+
+    <div class="form-group">
+        @Html.LabelFor(c => c.Customer.Birthdate)
+        @Html.TextBoxFor(c => c.Customer.Birthdate, "{0:d MMM yyyy}", new { @class = "form-control" })
+        @Html.ValidationMessageFor(c => c.Customer.Birthdate)
+    </div>
+
     <div class="checkbox">
         <label>
             @Html.CheckBoxFor(c => c.Customer.IsSubcribeToNewsletter) Subscribe or not?
         </label>
     </div>
     @Html.HiddenFor(c => c.Customer.Id)
+    @Html.AntiForgeryToken()
+    <!--This AntiForgeryToken is used to prevent CSRF (Cross-stie Request Forgery)
+        This method will create a token which is like a secret code and put it as a hidden field in this form
+        and also as a cookie in the user's cookies-->
+    <!--even if the hacker steal this cookie, they still do have the access to the hidden field
+        so on the server, we do this validation, if this valuse is not match, it will be an attack and
+        immediatley stop the request-->
     <button type="submit" class="btn btn-primary">Save</button>
 }
 
+
+@section scripts
+{
+    @Scripts.Render("~/bundles/jqueryval")  <!--render a jQury validation-->
+    <!--earlier, we use data annotation to create validation, and the good thing is that data annotation 
+        can work well on both clients and server
+        so on the server side, when we get the parameter of an action, mvc framework validate that parameter
+        using data annotations applied on its properties
+        also in razor view, when we render the page using html helper methods, razor data engine looks at data
+        annotaion applied on the refernce properties, and adds additional attributes to the html markup-->
+
+    <!--client-side validation only works with standard .net data annotation, for the business validation rules
+        , we need to implement them on the server side, which is more reasonable because of the changing of data-->
+    
+}

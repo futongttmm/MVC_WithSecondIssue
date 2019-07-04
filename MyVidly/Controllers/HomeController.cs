@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MyVidly.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -6,11 +7,15 @@ using System.Web.Mvc;
 
 namespace MyVidly.Controllers
 {
+    //[AllowAnonymous]
     public class HomeController : Controller
     {
         public ActionResult Index()
         {
-            return View();
+            if (User.IsInRole(RoleName.CanManageMovies))
+                return View("AdminView");
+
+            return View("CustomerView");
         }
 
         public ActionResult About()
